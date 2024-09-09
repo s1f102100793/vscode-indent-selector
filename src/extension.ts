@@ -1,26 +1,65 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  const disposable = vscode.commands.registerCommand(
+    "indent-selector.selectIndent",
+    () => {
+      vscode.window.showInformationMessage("Indent Selector Activated");
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "indent-selector" is now active!');
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        return;
+      }
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('indent-selector.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from indent-selector!');
-	});
+      const editor = activeEditor;
+      const document = editor.document;
+      const selection = editor.selection;
 
-	context.subscriptions.push(disposable);
+      const currentLine = selection.start.line;
+      const currentIndentLevel = getIndentationLevel(
+        document.lineAt(currentLine).text
+      );
+
+      let startLine = currentLine;
+      let endLine = currentLine;
+
+      while (
+        startLine > 0 &&
+        getIndentationLevel(document.lineAt(startLine - 1).text) >=
+          currentIndentLevel
+      ) {
+        startLine--;
+      }
+
+      while (
+        endLine < document.lineCount - 1 &&
+        getIndentationLevel(document.lineAt(endLine + 1).text) >=
+          currentIndentLevel
+      ) {
+        endLine++;
+      }
+
+      const startPosition = new vscode.Position(startLine, 0);
+      const endPosition = new vscode.Position(
+        endLine,
+        document.lineAt(endLine).text.length
+      );
+      const newSelection = new vscode.Selection(startPosition, endPosition);
+      editor.selection = newSelection;
+    }
+  );
+
+  context.subscriptions.push(disposable);
+
+  const getIndentationLevel = (lineText: string): number => {
+    const tabSizeRaw = vscode.window.activeTextEditor?.options.tabSize;
+    const tabSize = typeof tabSizeRaw === "number" ? tabSizeRaw : 4;
+    const lineIndentation = lineText.replace(/\t/g, " ".repeat(tabSize));
+    const match = lineIndentation.match(/^\s+/);
+    return match ? match[0].length : 0;
+  };
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  console.log("Extension 'indent-selector' is now deactivated.");
+}

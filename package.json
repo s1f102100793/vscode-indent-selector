@@ -9,13 +9,15 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:indent-selector.selectIndent"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "indent-selector.helloWorld",
-        "title": "Hello World"
+        "command": "indent-selector.selectIndent",
+        "title": "Select by Indentation Level"
       }
     ]
   },
